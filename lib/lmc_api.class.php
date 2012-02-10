@@ -58,7 +58,7 @@ class LmcApi {
               {
                 $count++;
                 $query = "select * from ".$this->settings['database']['table']." where `".$cdr['filename']."` = '".$file."'";
-                $result = $this->db->Execute($query) or die("Error in query: $query. " . $db->ErrorMsg());
+                $result = $this->db->Execute($query) or die("Error in query: $query. " . $this->db->ErrorMsg());
                 $result_cnt = $result->RecordCount();
                 
                 // Ensure we got 1 and only 1 result from the query

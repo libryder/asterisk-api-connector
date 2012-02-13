@@ -21,6 +21,8 @@ $db->Connect($settings['database']['hostname'],
 $ADODB_FETCH_MODE = ADODB_FETCH_ASSOC;
 
 $endpoint = new LmcApi($db, $settings);
+$endpoint->use_cdr = false;
+
 $calls = $endpoint->process_calls();
 
 // Show results 

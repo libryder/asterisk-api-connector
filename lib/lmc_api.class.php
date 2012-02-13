@@ -7,6 +7,7 @@
 class LmcApi {
 
   private $endpoint, $data, $settings, $db, $api_auth;
+  private $use_cdr = false;
 
   function __construct($db, $settings, $data=null) 
   {
@@ -15,6 +16,20 @@ class LmcApi {
     $this->settings = $settings;
     $this->db = $db;
     $this->api_auth = $this->settings['auth'];
+  }
+
+  public function __get($property) {
+    if (property_exists($this, $property)) {
+      return $this->$property;
+    }
+  }
+
+  public function __set($property, $value) {
+    if (property_exists($this, $property)) {
+      $this->$property = $value;
+    }
+
+    return $this;
   }
 
   // *********************** PROCESS_CALLS **************************
@@ -52,75 +67,89 @@ class LmcApi {
           {
             while (($file = readdir($dh)) !== false) 
             {
-              $fileinfo = pathinfo($file);
+              $fileinfo = pathinfo($dir.'/'.$file);
+
               // Directory entry is a file and is an allowable type; proceed.
-              if (in_array(strtolower($fileinfo['extension']), array("mp3", "wav"))) 
+              if (is_file($dir.'/'.$file) && isset($fileinfo['extension']) && in_array(strtolower($fileinfo['extension']), array("mp3", "wav"))) 
               {
                 $count++;
-                $query = "select * from ".$this->settings['database']['table']." where `".$cdr['filename']."` = '".$file."'";
-                $result = $this->db->Execute($query) or die("Error in query: $query. " . $this->db->ErrorMsg());
-                $result_cnt = $result->RecordCount();
                 
-                // Ensure we got 1 and only 1 result from the query
-                if ($result_cnt == 1) 
+                if ($this->use_cdr)
                 {
-                  $result = $result->FetchNextObject();
+                  $query = "select * from ".$this->settings['database']['table']." where `".$cdr['filename']."` = '".$file."'";
+                  $result = $this->db->Execute($query) or die("Error in query: $query. " . $this->db->ErrorMsg());
+                  $result_cnt = $result->RecordCount();
                   
-                  $ouid = '1';
-                  
-                  // Parse results according to column mapping definition from [cdr] section in settings
-                  $criteria = array(
-                    'duration' => @$result->{strtoupper($cdr['duration'])},
-                    'calldate' => @$result->{strtoupper($cdr['calldate'])},
-                    'caller_id' => @$result->{strtoupper($cdr['callerid'])},
-                    'tracking_number' => @$result->{strtoupper($cdr['tracking_number'])},
-                    'ringto_number' => @$result->{strtoupper($cdr['ringto'])}
-                  );
-
-                  
-                  // This function will run the function in anon.php. See the settings
-                  // file for more information. 
-                  if ($this->settings['callback']['enabled']) 
-                  { 
-                    include 'anon.php';
-                    $criteria = $user_function($file, $criteria);
-                    print_r($criteria);
-                  }
-                  die();
-                  $data = array_merge(array("criteria" => $criteria), $this->api_auth);
-
-                  //create call detail
-                  $call_detail = json_decode($this->post_json($data, "insertCall"), true);
-
-                  if ($call_detail['status'] == "success") 
-                  {
-                    $processed++;
-                   
-                    $call_detail_id = $call_detail['call_detail']['id'];
-
-                    //upload audio and create recording record
-                    $data = array_merge(array("audio" => "@".$dir.'/'.$file, "call_detail_id" => $call_detail_id), $this->api_auth);
-
-                    $recording = $this->post_media($data);
-
-                    // Move file to archive folder if enabled in settings
-                    if ($can_move_file) 
-                    {
-                      copy($dir.'/'.$file, $move_location.'/'.basename($file));
-                      unlink ($dir.'/'.$file);
-                    }
-
-                  }
+                  // Ensure we got 1 and only 1 result from the query
+                  if ($result_cnt == 1) {
+                    $result = $result->FetchNextObject();
+                    
+                    // Parse results according to column mapping definition from [cdr] section in settings
+                    $criteria = array(
+                      'duration' => @$result->{strtoupper($cdr['duration'])},
+                      'calldate' => @$result->{strtoupper($cdr['calldate'])},
+                      'caller_id' => @$result->{strtoupper($cdr['callerid'])},
+                      'tracking_number' => @$result->{strtoupper($cdr['tracking_number'])},
+                      'ringto_number' => @$result->{strtoupper($cdr['ringto'])}
+                    );
+                    
+                  }                  
                   else 
                   {
-                    $error[] = json_encode($call_detail['error_message'])."($file)";
+                    // Could not find CDR record, skip this iteration
+                    $error[] = "Incorrect number of results while querying CDR table: $result_cnt of 1 expected found.";
+                    continue;
                   }
-                
+                  
+                }
+                else
+                {
+                  // criteria is being set manually, in the callback function
+                  $criteria = array();
+                }
+                // This function will run the function in anon.php. See the settings
+                // file for more information. 
+                if ($this->settings['callback']['enabled']) 
+                { 
+                  include 'anon.php';
+                  $ouid = '1';
+                  $criteria = $user_function($file, $criteria, $dir);
+                  print_r($criteria);
+                }
+                else
+                {
+                  $ouid = '1';
+                }
+                die();
+                $data = array_merge(array("criteria" => $criteria), $this->api_auth);
+
+                //create call detail
+                $call_detail = json_decode($this->post_json($data, "insertCall"), true);
+
+                if ($call_detail['status'] == "success") 
+                {
+                  $processed++;
+                 
+                  $call_detail_id = $call_detail['call_detail']['id'];
+
+                  //upload audio and create recording record
+                  $data = array_merge(array("audio" => "@".$dir.'/'.$file, "call_detail_id" => $call_detail_id), $this->api_auth);
+
+                  $recording = $this->post_media($data);
+
+                  // Move file to archive folder if enabled in settings
+                  if ($can_move_file) 
+                  {
+                    copy($dir.'/'.$file, $move_location.'/'.basename($file));
+                    unlink ($dir.'/'.$file);
+                  }
+
                 }
                 else 
                 {
-                  $error[] = "Incorrect number of results while querying CDR table: $result_cnt of 1 expected found.";
+                  $error[] = json_encode($call_detail['error_message'])."($file)";
                 }
+
               }
             }
             closedir($dh);

@@ -113,7 +113,6 @@ class LmcApi extends Callback {
                   $criteria = $this->user_function($file, $criteria, $dir);
                   if ($criteria == null) { continue; }
                   print_r($criteria);
-                  die();
                 }
                 else
                 {

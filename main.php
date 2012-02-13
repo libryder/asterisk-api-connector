@@ -21,6 +21,8 @@ $db->Connect($settings['database']['hostname'],
 $ADODB_FETCH_MODE = ADODB_FETCH_ASSOC;
 
 $endpoint = new LmcApi($db, $settings);
+
+// Set criteria array for the call details manually in anon.php instead of Asterisk's CDR's
 $endpoint->use_cdr = false;
 
 $calls = $endpoint->process_calls();

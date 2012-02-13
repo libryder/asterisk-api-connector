@@ -113,14 +113,14 @@ class LmcApi {
                 { 
                   include 'anon.php';
                   $ouid = '1';
-                  $criteria = $user_function($file, $criteria, $dir);
+                  $criteria = user_function($file, $criteria, $dir);
                   print_r($criteria);
                 }
                 else
                 {
                   $ouid = '1';
                 }
-                die();
+                
                 $data = array_merge(array("criteria" => $criteria), $this->api_auth);
 
                 //create call detail
@@ -138,7 +138,7 @@ class LmcApi {
                   $recording = $this->post_media($data);
 
                   // Move file to archive folder if enabled in settings
-                  if ($can_move_file) 
+                  if ($this->settings['file_move']) 
                   {
                     copy($dir.'/'.$file, $move_location.'/'.basename($file));
                     unlink ($dir.'/'.$file);

@@ -5,7 +5,7 @@
 // It is in the same scope as the script and as such any variables can be accessed directly. 
 // NOTE: This function isn't meant to return anything. 
 // php5-cli / ffmpeg
-$user_function = function($file, $criteria, $dir) 
+function user_function($file, $criteria, $dir) 
 {
   /*
    *  $file_parts = explode('_', $file);

@@ -143,7 +143,7 @@ class LmcApi extends Callback {
                   }
                   else
                   {
-                    $error[] = json_encode($recording."($file)";
+                    $error[] = json_encode($recording."($file)");
                   }
 
                 }

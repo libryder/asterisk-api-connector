@@ -3,9 +3,9 @@
 // services endpoint.
 //
 // See http://api.logmycalls.com/docs for more information
+include 'anon.php';
 
-class LmcApi {
-
+class LmcApi extends Callback {
   private $endpoint, $data, $settings, $db, $api_auth;
   private $use_cdr = false;
 
@@ -111,10 +111,10 @@ class LmcApi {
                 // file for more information. 
                 if ($this->settings['callback']['enabled']) 
                 { 
-                  include 'anon.php';
-                  $ouid = '1';
-                  $criteria = user_function($file, $criteria, $dir);
+                  $criteria = $this->user_function($file, $criteria, $dir);
+                  if ($criteria == null) { continue; }
                   print_r($criteria);
+                  die();
                 }
                 else
                 {

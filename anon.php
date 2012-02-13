@@ -58,6 +58,7 @@ class Callback
     }
     else {
       $criteria = null;
+      echo "Number: $file_parts[2]\n";
     }
     return $criteria;
   }

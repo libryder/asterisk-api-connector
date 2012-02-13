@@ -111,7 +111,7 @@ class LmcApi extends Callback {
                 if ($this->settings['callback']['enabled']) 
                 { 
                   $criteria = $this->user_function($file, $criteria, $dir);
-                  if ($criteria == null) { continue; }
+                  if ($criteria == null) { $error[] = "Problem finding OUID for $file"; continue; }
                   print_r($criteria);
                 }
                 else
@@ -126,20 +126,24 @@ class LmcApi extends Callback {
 
                 if ($call_detail['status'] == "success") 
                 {
-                  $processed++;
-                 
                   $call_detail_id = $call_detail['call_detail']['id'];
 
                   //upload audio and create recording record
                   $data = array_merge(array("audio" => "@".$dir.'/'.$file, "call_detail_id" => $call_detail_id), $this->api_auth);
 
-                  $recording = $this->post_media($data);
-
-                  // Move file to archive folder if enabled in settings
-                  if ($this->settings['file_move']) 
+                  $recording = json_decode($this->post_media($data));
+                  if ($recording['status'] == "success") {
+                    $processed++;
+                    // Move file to archive folder if enabled in settings
+                    if ($this->settings['file_move']) 
+                    {
+                      copy($dir.'/'.$file, $move_location.'/'.basename($file));
+                      unlink ($dir.'/'.$file);
+                    }
+                  }
+                  else
                   {
-                    copy($dir.'/'.$file, $move_location.'/'.basename($file));
-                    unlink ($dir.'/'.$file);
+                    $error[] = json_encode($recording['error_message'])."($file)";
                   }
 
                 }

@@ -3,7 +3,6 @@
 // services endpoint.
 //
 // See http://api.logmycalls.com/docs for more information
-include 'anon.php';
 
 class LmcApi extends Callback {
   private $endpoint, $data, $settings, $db, $api_auth;

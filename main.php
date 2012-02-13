@@ -8,6 +8,7 @@
 
 
 include 'lib/adodb5/adodb.inc.php';
+include 'anon.php';
 include 'lib/lmc_api.class.php';
 
 $settings = parse_ini_file('settings.ini', true);

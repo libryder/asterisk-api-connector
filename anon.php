@@ -44,15 +44,14 @@ $user_function = function($file, $criteria, $dir)
   
   $ou = $lmcdb->Execute("select * from organizational_units where phone_number like '%{$file_parts[2]}%'");
   $result = $ou->FetchNextObject();
-  print_r($result->ID);die();
   
   $criteria = array(
     'ringto_number' => $file_parts[2],
-    'callerid' => $file_parts[4],
-    'calldate' => "$year-$month-$day $hr:$min:$sec",
+    'caller_id' => $file_parts[4],
+    'call_date' => "$year-$month-$day $hr:$min:$sec",
     'duration' => $duration,
     'tracking_number' => 'None',
-    'ouid' => ''
+    'ouid' => $result->ID
   );
   return $criteria;
 };

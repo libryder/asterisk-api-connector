@@ -27,7 +27,7 @@ class Callback
     $hr = substr($calldate, 9, 2);;
     $min = substr($calldate, 11, 2);
     $sec = substr($calldate, 13, 2);
-    
+    $calldate = date("Y-m-d G:i:s", strtotime("$year-$month-$day $hr:$min:$sec") - 60*60*6);
     
     // get duration of file
     $time = exec("ffmpeg -i " . escapeshellarg($dir.'/'.$file) . " 2>&1 | grep 'Duration' | cut -d ' ' -f 4 | sed s/,//");
@@ -50,7 +50,7 @@ class Callback
       $criteria = array(
         'ringto_number' => $file_parts[2],
         'caller_id' => $file_parts[4],
-        'call_date' => "$year-$month-$day $hr:$min:$sec",
+        'call_date' => $calldate,
         'duration' => $duration,
         'tracking_number' => 'None',
         'ouid' => $result->ID

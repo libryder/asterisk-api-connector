@@ -18,7 +18,9 @@ class Callback
      *  [custom logging function], etc
      * 
      */
-
+  
+    // if use_cdr = false in main.php, this function must return an array with the following structure
+    // based on your own custom logic.
     $criteria = array(
       'ringto_number' => '',
       'caller_id' => '',
